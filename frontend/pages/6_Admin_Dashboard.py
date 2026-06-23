@@ -3,6 +3,8 @@ import requests
 import pandas as pd
 import plotly.express as px
 
+API_URL = "https://cloud-bus-pass-system-34vc.onrender.com"
+
 st.set_page_config(
     page_title="Admin Dashboard",
     page_icon="📊",
@@ -15,9 +17,16 @@ st.markdown("Monitor users, bookings, revenue, and bus performance")
 try:
 
     # Analytics Summary
-    summary = requests.get(
-        "http://localhost:8000/analytics/summary"
-    ).json()
+    summary_response = requests.get(
+        f"{API_URL}/analytics/summary",
+        timeout=30
+    )
+
+    if summary_response.status_code != 200:
+        st.error("Unable to fetch analytics")
+        st.stop()
+
+    summary = summary_response.json()
 
     # KPI Cards
     col1, col2, col3, col4 = st.columns(4)
@@ -50,90 +59,98 @@ try:
 
     # Bus Data
     buses_response = requests.get(
-        "http://localhost:8000/buses/"
+        f"{API_URL}/buses/",
+        timeout=30
     )
 
-    buses = buses_response.json()
+    if buses_response.status_code == 200:
 
-    if buses:
+        buses = buses_response.json()
 
-        buses_df = pd.DataFrame(buses)
+        if buses:
 
-        col1, col2 = st.columns(2)
+            buses_df = pd.DataFrame(buses)
 
-        with col1:
+            col1, col2 = st.columns(2)
 
-            st.subheader("💰 Fare Analysis")
+            with col1:
 
-            fare_chart = px.bar(
-                buses_df,
-                x="bus_name",
-                y="fare",
-                title="Fare By Bus"
-            )
+                st.subheader("💰 Fare Analysis")
 
-            st.plotly_chart(
-                fare_chart,
-                use_container_width=True
-            )
-
-        with col2:
-
-            st.subheader("🛣 Route Distribution")
-
-            route_df = (
-                buses_df
-                .groupby(
-                    ["source", "destination"]
+                fare_chart = px.bar(
+                    buses_df,
+                    x="bus_name",
+                    y="fare",
+                    title="Fare By Bus"
                 )
-                .size()
-                .reset_index(name="count")
-            )
 
-            route_chart = px.pie(
-                route_df,
-                values="count",
-                names="destination",
-                title="Routes"
-            )
+                st.plotly_chart(
+                    fare_chart,
+                    use_container_width=True
+                )
 
-            st.plotly_chart(
-                route_chart,
-                use_container_width=True
-            )
+            with col2:
+
+                st.subheader("🛣 Route Distribution")
+
+                route_df = (
+                    buses_df
+                    .groupby(
+                        ["source", "destination"]
+                    )
+                    .size()
+                    .reset_index(name="count")
+                )
+
+                route_chart = px.pie(
+                    route_df,
+                    values="count",
+                    names="destination",
+                    title="Routes"
+                )
+
+                st.plotly_chart(
+                    route_chart,
+                    use_container_width=True
+                )
 
     st.divider()
 
     # Popular Buses
     try:
 
-        booking_stats = requests.get(
-            "http://localhost:8000/analytics/bookings-per-bus"
-        ).json()
+        booking_response = requests.get(
+            f"{API_URL}/analytics/bookings-per-bus",
+            timeout=30
+        )
 
-        if booking_stats:
+        if booking_response.status_code == 200:
 
-            booking_df = pd.DataFrame(
-                booking_stats
-            )
+            booking_stats = booking_response.json()
 
-            st.subheader(
-                "🔥 Most Popular Buses"
-            )
+            if booking_stats:
 
-            popular_chart = px.bar(
-                booking_df,
-                x="bus_name",
-                y="total_bookings",
-                title="Bookings Per Bus"
-            )
+                booking_df = pd.DataFrame(
+                    booking_stats
+                )
 
-            st.plotly_chart(
-                popular_chart,
-                use_container_width=True
-            )
+                st.subheader(
+                    "🔥 Most Popular Buses"
+                )
 
-    except:
+                popular_chart = px.bar(
+                    booking_df,
+                    x="bus_name",
+                    y="total_bookings",
+                    title="Bookings Per Bus"
+                )
+
+                st.plotly_chart(
+                    popular_chart,
+                    use_container_width=True
+                )
+
+    except Exception:
         st.info(
             "Bookings analytics API not added yet"
         )

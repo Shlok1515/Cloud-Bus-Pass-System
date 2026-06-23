@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
-import pandas as pd
+
+API_URL = "https://cloud-bus-pass-system-34vc.onrender.com"
 
 st.set_page_config(
     page_title="My Bookings",
@@ -17,8 +18,13 @@ if "user_id" not in st.session_state:
 try:
 
     response = requests.get(
-        f"http://localhost:8000/bookings/user/{st.session_state['user_id']}"
+        f"{API_URL}/bookings/user/{st.session_state['user_id']}",
+        timeout=30
     )
+
+    if response.status_code != 200:
+        st.error("Unable to fetch bookings")
+        st.stop()
 
     bookings = response.json()
 
@@ -32,7 +38,7 @@ try:
 
             st.markdown("---")
 
-            col1, col2, col3 = st.columns([3,3,2])
+            col1, col2, col3 = st.columns([3, 3, 2])
 
             with col1:
                 st.subheader(

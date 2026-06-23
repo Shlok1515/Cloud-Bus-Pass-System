@@ -1,6 +1,8 @@
 import streamlit as st
 import requests
 
+API_URL = "https://cloud-bus-pass-system-34vc.onrender.com"
+
 st.set_page_config(
     page_title="Login",
     page_icon="🔐",
@@ -21,28 +23,32 @@ password = st.text_input(
 
 if st.button("Login"):
 
-    try:
+    if not email or not password:
+        st.warning("Please enter email and password")
 
-        response = requests.post(
-            "http://localhost:8000/users/login",
-            json={
-                "email": email,
-                "password": password
-            }
-        )
+    else:
+        try:
 
-        if response.status_code == 200:
+            response = requests.post(
+                f"{API_URL}/users/login",
+                json={
+                    "email": email,
+                    "password": password
+                },
+                timeout=30
+            )
 
-            data = response.json()
+            if response.status_code == 200:
 
-            st.session_state["token"] = data["access_token"]
-            st.session_state["user_id"] = data["user_id"]
-            st.success("Login Successful")
+                data = response.json()
 
-            st.json(data)
+                st.session_state["token"] = data["access_token"]
+                st.session_state["user_id"] = data["user_id"]
 
-        else:
-            st.error("Invalid Credentials")
+                st.success("✅ Login Successful")
 
-    except Exception as e:
-        st.error(str(e))
+            else:
+                st.error("❌ Invalid Credentials")
+
+        except requests.exceptions.RequestException as e:
+            st.error(f"Unable to connect to backend: {e}")

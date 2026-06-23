@@ -11,10 +11,13 @@ st.set_page_config(
 st.title("🚌 Search Buses")
 st.markdown("Find available buses and fares for your journey")
 
-API_URL = "http://localhost:8000/buses/"
+API_URL = "https://cloud-bus-pass-system-34vc.onrender.com"
 
 try:
-    response = requests.get(API_URL)
+    response = requests.get(
+        f"{API_URL}/buses/",
+        timeout=30
+    )
 
     if response.status_code != 200:
         st.error("Unable to fetch buses")
@@ -62,6 +65,7 @@ try:
 
         if source == "Select Source" or destination == "Select Destination":
             st.warning("Please select source and destination")
+
         else:
 
             filtered = df[

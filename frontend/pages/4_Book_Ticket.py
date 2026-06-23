@@ -2,6 +2,8 @@ import streamlit as st
 import requests
 import pandas as pd
 
+API_URL = "https://cloud-bus-pass-system-34vc.onrender.com"
+
 st.set_page_config(
     page_title="Book Ticket",
     page_icon="🎫",
@@ -18,8 +20,13 @@ if "user_id" not in st.session_state:
 try:
 
     buses_response = requests.get(
-        "http://localhost:8000/buses/"
+        f"{API_URL}/buses/",
+        timeout=30
     )
+
+    if buses_response.status_code != 200:
+        st.error("Unable to fetch buses")
+        st.stop()
 
     buses = buses_response.json()
 
@@ -55,21 +62,20 @@ try:
         bus_id = bus_options[selected_bus]
 
         booking_response = requests.post(
-            "http://localhost:8000/bookings/book",
+            f"{API_URL}/bookings/book",
             json={
                 "user_id": st.session_state["user_id"],
                 "bus_id": bus_id,
                 "seats_booked": seats
-            }
+            },
+            timeout=30
         )
 
         if booking_response.status_code == 200:
 
             data = booking_response.json()
 
-            st.success(
-                "🎉 Ticket Booked Successfully"
-            )
+            st.success("🎉 Ticket Booked Successfully")
 
             st.json(data)
 
@@ -79,7 +85,7 @@ try:
 
         else:
             st.error(
-                "Booking Failed"
+                f"Booking Failed: {booking_response.text}"
             )
 
 except Exception as e:
