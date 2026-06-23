@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+
+  backend:
+    build: ./backend
+
+    container_name: bus_backend
+
+    ports:
+      - "8000:8000"
+
+    environment:
+      DATABASE_URL: postgresql://postgres:Shloksingh%402005@host.docker.internal:5432/bus_booking
+
+    restart: always
+
+  frontend:
+    build: ./frontend
+
+    container_name: bus_frontend
+
+    ports:
+      - "8501:8501"
+
+    depends_on:
+      - backend
+
+    environment:
+      API_URL: http://backend:8000
+
+    restart: always
